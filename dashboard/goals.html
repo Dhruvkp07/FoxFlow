@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxFlow — Goals & Streaks</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+    <main class="main-content">
+        <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <h1 class="page-title">🎯 Goals & Streaks</h1>
+                <p class="page-subtitle">Set goals, build streaks, track progress</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModal()">+ New Goal</button>
+        </div>
+
+        <div style="margin-bottom:24px;">
+            <button class="btn btn-secondary" onclick="checkStreaks()">🔄 Check Today's Streaks</button>
+        </div>
+
+        <div id="goals-container" class="grid-auto">
+            <div class="card empty-state">
+                <div class="icon">🎯</div>
+                <p>Loading goals...</p>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal-overlay" id="goal-modal">
+            <div class="modal">
+                <div class="modal-title">Create New Goal</div>
+                <div class="input-group">
+                    <label>Goal Title</label>
+                    <input type="text" class="input" id="goal-title" placeholder="e.g. Stay focused for 4 hours">
+                </div>
+                <div class="input-group">
+                    <label>Goal Type</label>
+                    <select class="select" id="goal-type">
+                        <option value="screen_time">Screen Focus Time (min)</option>
+                        <option value="focus_score">Minimum Focus Score (0-100)</option>
+                        <option value="website_avoidance">Limit Distracting Sites (max min)</option>
+                        <option value="pomodoro_count">Complete Pomodoros (count)</option>
+                        <option value="app_usage_limit">Limit App Usage (max min)</option>
+                        <option value="custom">Custom Goal</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Target Value</label>
+                    <input type="number" class="input" id="goal-value" placeholder="e.g. 240">
+                </div>
+                <div class="input-group">
+                    <label>Description (optional)</label>
+                    <input type="text" class="input" id="goal-desc" placeholder="For app_usage_limit, enter app name here">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="createGoal()">Create Goal</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+async function loadGoals() {
+    try {
+        const goals = await API.get('/api/features/goals');
+        renderGoals(goals);
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function renderGoals(goals) {
+    const container = document.getElementById('goals-container');
+    if (!goals || !goals.length) {
+        container.innerHTML = '<div class="card empty-state"><div class="icon">🎯</div><p>No goals yet. Create your first goal to start building streaks!</p></div>';
+        return;
+    }
+
+    container.innerHTML = goals.map(g => {
+        const progress = g.target_value > 0 ? Math.min(100, (g.current_value / g.target_value) * 100) : 0;
+        const isInverse = ['website_avoidance', 'app_usage_limit'].includes(g.target_type);
+        const progressColor = isInverse
+            ? (g.current_value <= g.target_value ? 'green' : 'red')
+            : (progress >= 100 ? 'green' : '');
+
+        return `
+        <div class="card" style="position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:12px;">
+                <div>
+                    <div style="font-weight:600; font-size:16px; margin-bottom:4px;">${escapeHtml(g.title)}</div>
+                    <span class="badge badge-info">${g.target_type.replace(/_/g, ' ')}</span>
+                </div>
+                ${g.streak_count > 0 ? `<span class="streak-badge"><span class="fire">🔥</span> ${g.streak_count}</span>` : ''}
+            </div>
+            ${g.description ? `<div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">${escapeHtml(g.description)}</div>` : ''}
+            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+                <span>Progress</span>
+                <span>${g.current_value} / ${g.target_value} ${g.target_unit || ''}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill ${progressColor}" style="width:${Math.min(100, progress)}%"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:16px; font-size:12px; color:var(--text-muted);">
+                <span>Best streak: ${g.longest_streak} days</span>
+                <span>${g.last_completed_date ? `Last: ${g.last_completed_date}` : 'Never completed'}</span>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                ${g.target_type === 'custom' ? `<button class="btn btn-sm btn-primary" onclick="markComplete(${g.id})">✓ Mark Done</button>` : ''}
+                <button class="btn btn-sm btn-danger" onclick="deleteGoal(${g.id})">🗑 Delete</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openModal() { document.getElementById('goal-modal').classList.add('active'); }
+function closeModal() { document.getElementById('goal-modal').classList.remove('active'); }
+
+async function createGoal() {
+    const title = document.getElementById('goal-title').value.trim();
+    const type = document.getElementById('goal-type').value;
+    const value = parseFloat(document.getElementById('goal-value').value);
+    const desc = document.getElementById('goal-desc').value.trim();
+
+    if (!title || !value) { showToast('Please fill in title and value', 'error'); return; }
+
+    await API.post('/api/features/goals', {
+        title, target_type: type, target_value: value, description: desc,
+    });
+    closeModal();
+    showToast('Goal created! 🎯', 'success');
+    loadGoals();
+}
+
+async function deleteGoal(id) {
+    if (!confirm('Delete this goal?')) return;
+    await API.delete(`/api/features/goals/${id}`);
+    showToast('Goal deleted', 'info');
+    loadGoals();
+}
+
+async function markComplete(id) {
+    await API.post(`/api/features/goals/${id}/complete`);
+    showToast('Goal marked complete! 🎉', 'success');
+    loadGoals();
+}
+
+async function checkStreaks() {
+    const results = await API.post('/api/features/goals/check-streaks');
+    showToast('Streaks updated!', 'success');
+    loadGoals();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', loadGoals);
+</script>
+</body>
+</html>

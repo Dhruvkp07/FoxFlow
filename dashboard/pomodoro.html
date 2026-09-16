@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxFlow — Pomodoro Timer</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">🍅 Pomodoro Timer</h1>
+            <p class="page-subtitle">Stay focused with timed work sessions</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <div class="timer-display">
+                    <div class="timer-circle">
+                        <svg viewBox="0 0 280 280">
+                            <defs>
+                                <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#ff6d00"/>
+                                    <stop offset="100%" stop-color="#ff9800"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="timer-circle-bg" cx="140" cy="140" r="130"/>
+                            <circle class="timer-circle-fill" id="timer-ring" cx="140" cy="140" r="130"/>
+                        </svg>
+                        <div class="timer-time" id="timer-display">25:00</div>
+                    </div>
+                    <div class="timer-state" id="timer-state">Ready to Focus</div>
+                    <div class="timer-controls">
+                        <button class="btn btn-primary btn-lg" id="btn-start" onclick="pomodoroStart()">▶ Start</button>
+                        <button class="btn btn-secondary btn-lg" id="btn-pause" onclick="pomodoroPause()" style="display:none;">⏸ Pause</button>
+                        <button class="btn btn-primary btn-lg" id="btn-resume" onclick="pomodoroResume()" style="display:none;">▶ Resume</button>
+                        <button class="btn btn-secondary" id="btn-skip" onclick="pomodoroSkip()" style="display:none;">⏭ Skip</button>
+                        <button class="btn btn-danger" id="btn-reset" onclick="pomodoroReset()" style="display:none;">↺ Reset</button>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-top:16px;">
+                    <span class="badge badge-info" id="sessions-badge">0 sessions completed</span>
+                </div>
+            </div>
+
+            <div>
+                <div class="card" style="margin-bottom:20px;">
+                    <div class="card-title" style="margin-bottom:16px;"><span class="icon">⚙️</span> Settings</div>
+                    <div class="input-group">
+                        <label>Work Duration (minutes)</label>
+                        <input type="number" class="input" id="work-duration" value="25" min="1" max="120">
+                    </div>
+                    <div class="input-group">
+                        <label>Break Duration (minutes)</label>
+                        <input type="number" class="input" id="break-duration" value="5" min="1" max="60">
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
+                        <span style="font-size:14px;">Auto-block distracting sites</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="auto-block" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title" style="margin-bottom:16px;"><span class="icon">📊</span> Today's Sessions</div>
+                    <div id="session-history">
+                        <div class="empty-state"><p>No sessions yet today</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let pomodoroInterval = null;
+
+async function pomodoroStart() {
+    const work = parseInt(document.getElementById('work-duration').value) || 25;
+    const brk = parseInt(document.getElementById('break-duration').value) || 5;
+    await API.post('/api/features/pomodoro/start', { work_minutes: work, break_minutes: brk });
+    showToast('Pomodoro started! Stay focused 🍅', 'success');
+    startPolling();
+}
+
+async function pomodoroPause() {
+    await API.post('/api/features/pomodoro/pause');
+    showToast('Paused', 'info');
+}
+
+async function pomodoroResume() {
+    await API.post('/api/features/pomodoro/resume');
+    showToast('Resumed! Keep going 💪', 'success');
+}
+
+async function pomodoroSkip() {
+    await API.post('/api/features/pomodoro/skip');
+    showToast('Skipped to next phase', 'info');
+}
+
+async function pomodoroReset() {
+    await API.post('/api/features/pomodoro/reset');
+    showToast('Timer reset', 'info');
+    updateTimerUI({ state: 'idle', remaining_seconds: 0, total_seconds: 0, completed_sessions: 0 });
+}
+
+function startPolling() {
+    if (pomodoroInterval) clearInterval(pomodoroInterval);
+    pollStatus();
+    pomodoroInterval = setInterval(pollStatus, 1000);
+}
+
+async function pollStatus() {
+    try {
+        const status = await API.get('/api/features/pomodoro/status');
+        updateTimerUI(status);
+    } catch (e) {}
+}
+
+function updateTimerUI(s) {
+    const mins = Math.floor(s.remaining_seconds / 60);
+    const secs = s.remaining_seconds % 60;
+    document.getElementById('timer-display').textContent =
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    // Ring progress
+    const circumference = 2 * Math.PI * 130;
+    const progress = s.total_seconds > 0 ? (1 - s.remaining_seconds / s.total_seconds) : 0;
+    document.getElementById('timer-ring').style.strokeDasharray = circumference;
+    document.getElementById('timer-ring').style.strokeDashoffset = circumference * (1 - progress);
+
+    // State label
+    const stateLabels = { idle: 'Ready to Focus', working: '🔥 Deep Focus', break: '☕ Break Time', paused: '⏸ Paused' };
+    document.getElementById('timer-state').textContent = stateLabels[s.state] || s.state;
+    document.getElementById('sessions-badge').textContent = `${s.completed_sessions || 0} sessions completed`;
+
+    // Buttons
+    const isIdle = s.state === 'idle';
+    const isWorking = s.state === 'working' || s.state === 'break';
+    const isPaused = s.state === 'paused';
+
+    document.getElementById('btn-start').style.display = isIdle ? '' : 'none';
+    document.getElementById('btn-pause').style.display = isWorking ? '' : 'none';
+    document.getElementById('btn-resume').style.display = isPaused ? '' : 'none';
+    document.getElementById('btn-skip').style.display = isWorking ? '' : 'none';
+    document.getElementById('btn-reset').style.display = !isIdle ? '' : 'none';
+}
+
+document.addEventListener('DOMContentLoaded', startPolling);
+</script>
+</body>
+</html>

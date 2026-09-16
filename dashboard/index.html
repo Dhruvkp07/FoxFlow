@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FoxFlow — Your AI-powered productivity intelligence platform. Track focus, apps, websites, and unlock your peak performance.">
+    <title>FoxFlow — Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle" id="date-display">Loading...</p>
+        </div>
+
+        <!-- Tracking Control -->
+        <div style="margin-bottom: 24px; display: flex; gap: 12px; align-items: center;">
+            <button class="btn btn-primary btn-lg" id="btn-start-tracking" onclick="startTracking()">
+                ▶ Start Tracking
+            </button>
+            <button class="btn btn-danger btn-lg" id="btn-stop-tracking" onclick="stopTracking()" style="display:none;">
+                ⏹ Stop Tracking
+            </button>
+            <span id="tracking-status" style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-secondary);">
+                <span class="status-dot inactive"></span> Tracking inactive
+            </span>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid-4" style="margin-bottom: 24px;">
+            <div class="card stat-card">
+                <div class="stat-icon">👁️</div>
+                <div class="stat-value" id="stat-focus-time">0m</div>
+                <div class="stat-label">Focus Time</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value green" id="stat-focus-score">0</div>
+                <div class="stat-label">Focus Score</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon">⌨️</div>
+                <div class="stat-value blue" id="stat-keystrokes">0</div>
+                <div class="stat-label">Keystrokes</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-icon">🍅</div>
+                <div class="stat-value purple" id="stat-pomodoros">0</div>
+                <div class="stat-label">Pomodoros</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid-2" style="margin-bottom: 24px;">
+            <!-- Focus Gauge -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🔥</span> Focus Level</div>
+                    <span class="badge badge-success" id="focus-badge">GOOD</span>
+                </div>
+                <div class="focus-gauge">
+                    <svg viewBox="0 0 200 200">
+                        <defs>
+                            <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#ff6d00"/>
+                                <stop offset="100%" stop-color="#ff9800"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="focus-gauge-bg" cx="100" cy="100" r="90"/>
+                        <circle class="focus-gauge-fill" id="gauge-fill" cx="100" cy="100" r="90"/>
+                    </svg>
+                    <div class="focus-gauge-text">
+                        <div class="focus-gauge-value" id="gauge-value">0</div>
+                        <div class="focus-gauge-label">Score</div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-around; margin-top:20px; font-size:13px;">
+                    <div style="text-align:center;">
+                        <div style="color:var(--accent-green); font-weight:600;" id="eye-focused">0m</div>
+                        <div style="color:var(--text-muted);">Focused</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="color:var(--accent-red); font-weight:600;" id="eye-away">0m</div>
+                        <div style="color:var(--text-muted);">Away</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="color:var(--accent-blue); font-weight:600;" id="mouse-clicks">0</div>
+                        <div style="color:var(--text-muted);">Clicks</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hourly Focus Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📈</span> Hourly Focus</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hourly-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 24px;">
+            <!-- Top Apps -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">💻</span> Top Apps</div>
+                </div>
+                <div id="top-apps-list">
+                    <div class="empty-state">
+                        <div class="icon">💻</div>
+                        <p>Start tracking to see your app usage</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Websites -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">🌐</span> Top Websites</div>
+                </div>
+                <div id="top-sites-list">
+                    <div class="empty-state">
+                        <div class="icon">🌐</div>
+                        <p>Start tracking to see your browsing activity</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Streaks -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">🔥</span> Active Streaks</div>
+                <a href="/goals" class="btn btn-sm btn-secondary">Manage Goals</a>
+            </div>
+            <div id="streaks-list">
+                <div class="empty-state">
+                    <div class="icon">🎯</div>
+                    <p>No active goals yet. <a href="/goals">Create your first goal!</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

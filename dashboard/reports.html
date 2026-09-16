@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxFlow — Reports</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">📈 Reports</h1>
+            <p class="page-subtitle">Your productivity analytics</p>
+        </div>
+
+        <!-- Period Tabs -->
+        <div style="display:flex; gap:8px; margin-bottom:24px;">
+            <button class="btn btn-primary" id="tab-daily" onclick="switchTab('daily')">Daily</button>
+            <button class="btn btn-secondary" id="tab-weekly" onclick="switchTab('weekly')">Weekly</button>
+            <button class="btn btn-secondary" id="tab-monthly" onclick="switchTab('monthly')">Monthly</button>
+        </div>
+
+        <!-- Daily Report -->
+        <div id="report-daily">
+            <div class="grid-4" style="margin-bottom:24px;">
+                <div class="card stat-card">
+                    <div class="stat-icon">👁️</div>
+                    <div class="stat-value" id="r-focus-time">—</div>
+                    <div class="stat-label">Focus Time</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value green" id="r-focus-score">—</div>
+                    <div class="stat-label">Avg Focus Score</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">⌨️</div>
+                    <div class="stat-value blue" id="r-keystrokes">—</div>
+                    <div class="stat-label">Keystrokes</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">🖱️</div>
+                    <div class="stat-value cyan" id="r-clicks">—</div>
+                    <div class="stat-label">Mouse Clicks</div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom:24px;">
+                <div class="card">
+                    <div class="card-title"><span class="icon">📊</span> Focus Over Time</div>
+                    <div class="chart-container"><canvas id="report-focus-chart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">💻</span> App Distribution</div>
+                    <div class="chart-container"><canvas id="report-app-chart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-title"><span class="icon">💻</span> Top Apps</div>
+                    <div id="r-apps"></div>
+                </div>
+                <div class="card">
+                    <div class="card-title"><span class="icon">🌐</span> Top Websites</div>
+                    <div id="r-sites"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Report -->
+        <div id="report-weekly" style="display:none;">
+            <div class="grid-3" style="margin-bottom:24px;">
+                <div class="card stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value" id="w-focus-hours">—</div>
+                    <div class="stat-label">Total Focus Hours</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value green" id="w-avg-score">—</div>
+                    <div class="stat-label">Avg Daily Score</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">🍅</div>
+                    <div class="stat-value purple" id="w-pomodoros">—</div>
+                    <div class="stat-label">Pomodoros</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="icon">📈</span> Weekly Focus Trend</div>
+                <div class="chart-container" style="height:300px;"><canvas id="weekly-chart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Monthly Report -->
+        <div id="report-monthly" style="display:none;">
+            <div class="grid-3" style="margin-bottom:24px;">
+                <div class="card stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="m-days">—</div>
+                    <div class="stat-label">Days Tracked</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value green" id="m-focus-hours">—</div>
+                    <div class="stat-label">Total Focus Hours</div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value blue" id="m-avg-score">—</div>
+                    <div class="stat-label">Avg Score</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title"><span class="icon">📊</span> Monthly Overview</div>
+                <div class="chart-container" style="height:300px;"><canvas id="monthly-chart"></canvas></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+let focusChart, appChart, weeklyChart, monthlyChart;
+
+function switchTab(tab) {
+    ['daily', 'weekly', 'monthly'].forEach(t => {
+        document.getElementById(`report-${t}`).style.display = t === tab ? '' : 'none';
+        document.getElementById(`tab-${t}`).className = t === tab ? 'btn btn-primary' : 'btn btn-secondary';
+    });
+    if (tab === 'daily') loadDaily();
+    if (tab === 'weekly') loadWeekly();
+    if (tab === 'monthly') loadMonthly();
+}
+
+async function loadDaily() {
+    const r = await API.get('/api/reports/daily');
+    document.getElementById('r-focus-time').textContent = formatMinutes(r.eye_tracking?.focus_minutes || 0);
+    document.getElementById('r-focus-score').textContent = Math.round(r.focus?.average_score || 0);
+    document.getElementById('r-keystrokes').textContent = formatNumber(r.input?.keystrokes || 0);
+    document.getElementById('r-clicks').textContent = formatNumber(r.input?.mouse_clicks || 0);
+
+    // Focus chart
+    const hourly = r.focus?.hourly || [];
+    if (focusChart) focusChart.destroy();
+    focusChart = new Chart(document.getElementById('report-focus-chart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: hourly.map(h => `${h.hour}:00`),
+            datasets: [{
+                label: 'Focus Score',
+                data: hourly.map(h => h.score),
+                borderColor: '#ff9800',
+                backgroundColor: 'rgba(255,152,0,0.1)',
+                fill: true, tension: 0.4, pointRadius: 4,
+            }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8a8a9f' } },
+                x: { grid: { display: false }, ticks: { color: '#8a8a9f' } } } },
+    });
+
+    // App chart
+    const apps = (r.top_apps || []).slice(0, 5);
+    if (appChart) appChart.destroy();
+    const colors = ['#ff9800','#42a5f5','#4caf50','#ab47bc','#26c6da'];
+    appChart = new Chart(document.getElementById('report-app-chart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: apps.map(a => a.name),
+            datasets: [{ data: apps.map(a => a.minutes), backgroundColor: colors }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#8a8a9f', padding: 12 } } } },
+    });
+
+    // Lists
+    document.getElementById('r-apps').innerHTML = (r.top_apps || []).slice(0, 5).map(a =>
+        `<div class="list-item"><span class="list-item-name">${escapeHtml(a.name)}</span><span class="list-item-value">${formatMinutes(a.minutes)}</span></div>`
+    ).join('') || '<p style="color:var(--text-muted); text-align:center; padding:20px;">No data</p>';
+
+    document.getElementById('r-sites').innerHTML = (r.top_websites || []).slice(0, 5).map(s =>
+        `<div class="list-item"><span class="list-item-name">${escapeHtml(s.domain)}</span><span class="list-item-value">${formatMinutes(s.minutes)}</span></div>`
+    ).join('') || '<p style="color:var(--text-muted); text-align:center; padding:20px;">No data</p>';
+}
+
+async function loadWeekly() {
+    const r = await API.get('/api/reports/weekly');
+    document.getElementById('w-focus-hours').textContent = r.total_focus_hours || 0;
+    document.getElementById('w-avg-score').textContent = Math.round(r.avg_daily_focus_score || 0);
+    document.getElementById('w-pomodoros').textContent = r.total_pomodoros || 0;
+
+    const days = r.daily_breakdown || [];
+    if (weeklyChart) weeklyChart.destroy();
+    weeklyChart = new Chart(document.getElementById('weekly-chart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: days.map(d => formatDate(d.date)),
+            datasets: [{
+                label: 'Focus Score', data: days.map(d => d.focus?.average_score || 0),
+                backgroundColor: 'rgba(255,152,0,0.5)', borderColor: '#ff9800', borderWidth: 1, borderRadius: 6,
+            }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8a8a9f' } },
+                x: { grid: { display: false }, ticks: { color: '#8a8a9f' } } } },
+    });
+}
+
+async function loadMonthly() {
+    const r = await API.get('/api/reports/monthly');
+    document.getElementById('m-days').textContent = r.total_days || 0;
+    document.getElementById('m-focus-hours').textContent = r.total_focus_hours || 0;
+    document.getElementById('m-avg-score').textContent = Math.round(r.avg_daily_focus_score || 0);
+
+    const weeks = r.weekly_breakdown || [];
+    if (monthlyChart) monthlyChart.destroy();
+    monthlyChart = new Chart(document.getElementById('monthly-chart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: weeks.map(w => `Week ${w.week}`),
+            datasets: [
+                { label: 'Avg Score', data: weeks.map(w => w.avg_score), backgroundColor: 'rgba(255,152,0,0.5)', borderRadius: 6 },
+                { label: 'Focus Hours', data: weeks.map(w => w.focus_hours), backgroundColor: 'rgba(66,165,245,0.5)', borderRadius: 6 },
+            ],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#8a8a9f' } } },
+            scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8a8a9f' } },
+                x: { grid: { display: false }, ticks: { color: '#8a8a9f' } } } },
+    });
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+
+document.addEventListener('DOMContentLoaded', loadDaily);
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxFlow — AI Insights</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">🤖 AI Insights</h1>
+            <p class="page-subtitle">AI-powered analysis of your productivity patterns</p>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:24px;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📊</span> Daily Analysis</div>
+                    <button class="btn btn-primary btn-sm" onclick="analyzDay()" id="btn-analyze">Analyze Today</button>
+                </div>
+                <div id="daily-insights" class="ai-response">
+                    <p style="color:var(--text-muted); text-align:center; padding:40px 0;">
+                        Click "Analyze Today" to get AI-powered insights about your productivity.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><span class="icon">📈</span> Weekly Trends</div>
+                    <button class="btn btn-secondary btn-sm" onclick="analyzeWeek()">Analyze Week</button>
+                </div>
+                <div id="weekly-insights" class="ai-response">
+                    <p style="color:var(--text-muted); text-align:center; padding:40px 0;">
+                        Click "Analyze Week" to see weekly trend analysis.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Chat -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title"><span class="icon">💬</span> Ask FoxFlow AI</div>
+            </div>
+            <div id="chat-messages" style="max-height:400px; overflow-y:auto; margin-bottom:16px;">
+                <div style="text-align:center; color:var(--text-muted); padding:20px;">
+                    Ask anything about your productivity data!<br>
+                    <span style="font-size:13px;">e.g. "What was my most productive hour today?" or "Am I spending too much time on social media?"</span>
+                </div>
+            </div>
+            <div class="ai-chat-input">
+                <input type="text" class="input" id="chat-input" placeholder="Ask about your productivity..." onkeypress="if(event.key==='Enter')sendChat()">
+                <button class="btn btn-primary" onclick="sendChat()">Send</button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+async function analyzDay() {
+    const container = document.getElementById('daily-insights');
+    container.innerHTML = '<div class="skeleton" style="height:200px;"></div>';
+    try {
+        const result = await API.get('/api/ai/insights');
+        container.innerHTML = markdownToHtml(result.insights || 'No insights available.');
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--accent-red);">Failed to generate insights.</p>';
+    }
+}
+
+async function analyzeWeek() {
+    const container = document.getElementById('weekly-insights');
+    container.innerHTML = '<div class="skeleton" style="height:200px;"></div>';
+    try {
+        const result = await API.get('/api/ai/weekly');
+        container.innerHTML = markdownToHtml(result.insights || 'No insights available.');
+    } catch (e) {
+        container.innerHTML = '<p style="color:var(--accent-red);">Failed to generate insights.</p>';
+    }
+}
+
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const question = input.value.trim();
+    if (!question) return;
+
+    const messages = document.getElementById('chat-messages');
+
+    // Add user message
+    messages.innerHTML += `
+        <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+            <div style="background:var(--fox-glow); border:1px solid var(--border-accent); border-radius:var(--radius-md); padding:10px 16px; max-width:70%; font-size:14px;">
+                ${escapeHtml(question)}
+            </div>
+        </div>`;
+
+    input.value = '';
+    messages.scrollTop = messages.scrollHeight;
+
+    // Add loading
+    const loadingId = 'loading-' + Date.now();
+    messages.innerHTML += `<div id="${loadingId}" style="margin-bottom:12px;"><div class="skeleton" style="height:60px; max-width:70%;"></div></div>`;
+    messages.scrollTop = messages.scrollHeight;
+
+    try {
+        const result = await API.post('/api/ai/chat', { question });
+        document.getElementById(loadingId).innerHTML = `
+            <div class="ai-response" style="max-width:80%; font-size:14px;">
+                ${markdownToHtml(result.answer || 'No response.')}
+            </div>`;
+    } catch (e) {
+        document.getElementById(loadingId).innerHTML = `
+            <div style="color:var(--accent-red); font-size:14px;">Failed to get response.</div>`;
+    }
+    messages.scrollTop = messages.scrollHeight;
+}
+
+function markdownToHtml(md) {
+    return md
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/^- (.*$)/gm, '<li>$1</li>')
+        .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+        .replace(/^\> (.*$)/gm, '<blockquote>$1</blockquote>')
+        .replace(/\n\n/g, '<br><br>')
+        .replace(/\n/g, '<br>');
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+</script>
+</body>
+</html>

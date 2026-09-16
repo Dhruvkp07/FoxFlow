@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxFlow — Settings</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">⚙️ Settings</h1>
+            <p class="page-subtitle">Configure FoxFlow to your preferences</p>
+        </div>
+
+        <div style="max-width:600px;">
+            <!-- Tracking Settings -->
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-title" style="margin-bottom:20px;"><span class="icon">📡</span> Tracking</div>
+
+                <div class="list-item">
+                    <div>
+                        <div class="list-item-name">Eye Tracking</div>
+                        <div class="list-item-meta">Uses webcam to detect screen focus</div>
+                    </div>
+                    <span class="badge badge-success">Available</span>
+                </div>
+                <div class="list-item">
+                    <div>
+                        <div class="list-item-name">App Tracking</div>
+                        <div class="list-item-meta">Monitors active foreground window</div>
+                    </div>
+                    <span class="badge badge-success">Available</span>
+                </div>
+                <div class="list-item">
+                    <div>
+                        <div class="list-item-name">Website Tracking</div>
+                        <div class="list-item-meta">Reads Chrome/Edge browser history</div>
+                    </div>
+                    <span class="badge badge-success">Available</span>
+                </div>
+                <div class="list-item">
+                    <div>
+                        <div class="list-item-name">Input Tracking</div>
+                        <div class="list-item-meta">Keyboard and mouse activity</div>
+                    </div>
+                    <span class="badge badge-success">Available</span>
+                </div>
+            </div>
+
+            <!-- AI Settings -->
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-title" style="margin-bottom:20px;"><span class="icon">🤖</span> AI Configuration</div>
+                <div class="input-group">
+                    <label>Gemini API Key</label>
+                    <input type="password" class="input" id="api-key" placeholder="Set via GEMINI_API_KEY environment variable">
+                </div>
+                <p style="font-size:13px; color:var(--text-secondary);">
+                    Get a free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a>.
+                    Set it as an environment variable: <code>set GEMINI_API_KEY=your_key</code>
+                </p>
+            </div>
+
+            <!-- About -->
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-title" style="margin-bottom:20px;"><span class="icon">🦊</span> About FoxFlow</div>
+                <div style="font-size:14px; color:var(--text-secondary); line-height:1.8;">
+                    <p><strong>FoxFlow v1.0</strong> — Productivity Intelligence Platform</p>
+                    <p>Track your focus, apps, websites, and input activity. Build streaks, achieve goals, and unlock AI-powered insights about your work patterns.</p>
+                    <div style="margin-top:16px; padding:16px; background:var(--bg-glass); border-radius:var(--radius-md);">
+                        <div style="font-weight:600; margin-bottom:8px;">Features</div>
+                        <ul style="padding-left:20px; font-size:13px;">
+                            <li>👁️ Eye tracking with focus detection</li>
+                            <li>💻 App usage monitoring</li>
+                            <li>🌐 Website visit tracking</li>
+                            <li>⌨️ Keyboard & mouse activity</li>
+                            <li>🍅 Pomodoro timer with auto-blocking</li>
+                            <li>🎯 Custom goals & streak system</li>
+                            <li>🚫 Website blocker</li>
+                            <li>📈 Daily, weekly, monthly reports</li>
+                            <li>🤖 AI-powered behavior analysis</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Start -->
+            <div class="card">
+                <div class="card-title" style="margin-bottom:20px;"><span class="icon">🚀</span> Quick Start Guide</div>
+                <div style="font-size:14px; color:var(--text-secondary); line-height:1.8;">
+                    <ol style="padding-left:20px;">
+                        <li>Click <strong>"Start Tracking"</strong> on the Dashboard to begin</li>
+                        <li>Set up <strong>Goals</strong> to build productivity streaks</li>
+                        <li>Use the <strong>Pomodoro Timer</strong> for focused work sessions</li>
+                        <li>Add distracting sites to the <strong>Blocker</strong></li>
+                        <li>Check <strong>Reports</strong> to see your daily progress</li>
+                        <li>Ask the <strong>AI</strong> for personalized productivity tips</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

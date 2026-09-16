@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoxFlow — Site Blocker</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-layout">
+    <aside class="sidebar"></aside>
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">🚫 Website Blocker</h1>
+            <p class="page-subtitle">Block distracting websites during focus sessions</p>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <!-- Master Toggle -->
+                <div class="card" style="margin-bottom:20px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <div style="font-weight:600; font-size:16px;">Blocker Status</div>
+                            <div style="font-size:13px; color:var(--text-secondary);" id="blocker-status-text">Disabled</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="blocker-toggle" onchange="toggleBlocker()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Add Site -->
+                <div class="card">
+                    <div class="card-title" style="margin-bottom:16px;"><span class="icon">➕</span> Add Website</div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" class="input" id="new-domain" placeholder="e.g. instagram.com" style="flex:1;">
+                        <button class="btn btn-primary" onclick="addSite()">Block</button>
+                    </div>
+                    <div style="margin-top:16px;">
+                        <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Quick add popular sites:</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('instagram.com')">Instagram</button>
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('facebook.com')">Facebook</button>
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('twitter.com')">Twitter/X</button>
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('reddit.com')">Reddit</button>
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('youtube.com')">YouTube</button>
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('tiktok.com')">TikTok</button>
+                            <button class="btn btn-sm btn-secondary" onclick="quickAdd('netflix.com')">Netflix</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blocked Sites List -->
+            <div class="card">
+                <div class="card-title" style="margin-bottom:16px;"><span class="icon">📋</span> Blocked Sites</div>
+                <div id="blocked-list">
+                    <div class="empty-state"><p>No sites blocked yet</p></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:24px; border-color:rgba(255,152,0,0.2);">
+            <div style="display:flex; align-items:start; gap:12px;">
+                <span style="font-size:24px;">⚠️</span>
+                <div>
+                    <div style="font-weight:600; margin-bottom:4px;">Administrator Required</div>
+                    <div style="font-size:13px; color:var(--text-secondary);">
+                        Website blocking works by modifying the Windows <code>hosts</code> file. 
+                        FoxFlow must be run as Administrator for blocking to work. 
+                        Right-click your terminal and select "Run as Administrator" before starting FoxFlow.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+async function loadBlockerStatus() {
+    const status = await API.get('/api/features/blocker/status');
+    document.getElementById('blocker-toggle').checked = status.enabled;
+    document.getElementById('blocker-status-text').textContent = status.enabled ? 'Active — blocking sites' : 'Disabled';
+    renderBlockedList(status.sites || []);
+}
+
+function renderBlockedList(sites) {
+    const container = document.getElementById('blocked-list');
+    if (!sites.length) {
+        container.innerHTML = '<div class="empty-state"><p>No sites blocked yet. Add some above!</p></div>';
+        return;
+    }
+    container.innerHTML = sites.map(s => `
+        <div class="list-item">
+            <div class="list-item-left">
+                <div class="list-item-icon">${s.active ? '🚫' : '⚪'}</div>
+                <div>
+                    <div class="list-item-name">${escapeHtml(s.domain)}</div>
+                    <div class="list-item-meta">${s.active ? 'Blocked' : 'Paused'}</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <label class="toggle">
+                    <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleSite('${s.domain}')">
+                    <span class="toggle-slider"></span>
+                </label>
+                <button class="btn btn-sm btn-danger" onclick="removeSite('${s.domain}')">✕</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function addSite() {
+    const domain = document.getElementById('new-domain').value.trim();
+    if (!domain) { showToast('Enter a domain', 'error'); return; }
+    const result = await API.post('/api/features/blocker/add', { domain });
+    if (result.error) { showToast(result.error, 'error'); }
+    else { showToast(`${domain} blocked!`, 'success'); document.getElementById('new-domain').value = ''; }
+    loadBlockerStatus();
+}
+
+async function quickAdd(domain) {
+    const result = await API.post('/api/features/blocker/add', { domain });
+    if (result.error) showToast(result.error, 'info');
+    else showToast(`${domain} blocked!`, 'success');
+    loadBlockerStatus();
+}
+
+async function removeSite(domain) {
+    await API.post('/api/features/blocker/remove', { domain });
+    showToast(`${domain} unblocked`, 'info');
+    loadBlockerStatus();
+}
+
+async function toggleSite(domain) {
+    await API.post('/api/features/blocker/toggle-site', { domain });
+    loadBlockerStatus();
+}
+
+async function toggleBlocker() {
+    const enabled = document.getElementById('blocker-toggle').checked;
+    await API.post(enabled ? '/api/features/blocker/enable' : '/api/features/blocker/disable');
+    document.getElementById('blocker-status-text').textContent = enabled ? 'Active — blocking sites' : 'Disabled';
+    showToast(enabled ? 'Blocker enabled!' : 'Blocker disabled', enabled ? 'success' : 'info');
+}
+
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+
+document.addEventListener('DOMContentLoaded', loadBlockerStatus);
+</script>
+</body>
+</html>
