@@ -1,7 +1,4 @@
-"""
-FoxFlow — Pomodoro Timer
-Manages work/break cycles with session tracking.
-"""
+
 import threading
 import time
 from datetime import datetime, date
@@ -16,8 +13,7 @@ class PomodoroState(str, Enum):
 
 
 class PomodoroTimer:
-    """Pomodoro timer with configurable work/break durations."""
-
+  
     def __init__(self):
         self._lock = threading.Lock()
         self._thread = None
@@ -28,14 +24,14 @@ class PomodoroTimer:
         self.long_break_minutes = 15
         self.sessions_before_long = 4
 
-        # Current session
+  
         self._remaining_seconds = 0
         self._total_seconds = 0
         self._session_start = None
         self._completed_sessions = 0
         self._paused_remaining = 0
 
-        # Auto-block during work
+       
         self.auto_block = True
 
     def start_work(self, work_minutes=None, break_minutes=None):
@@ -133,7 +129,6 @@ class PomodoroTimer:
                 if self.state in (PomodoroState.WORKING, PomodoroState.BREAK):
                     self._remaining_seconds -= 1
 
-        # Timer finished
         with self._lock:
             if self.state == PomodoroState.WORKING:
                 self._complete_work_session()
@@ -148,8 +143,7 @@ class PomodoroTimer:
         if self.auto_block:
             self._deactivate_blocker()
 
-        # Determine break duration
-        if self._completed_sessions % self.sessions_before_long == 0:
+                if self._completed_sessions % self.sessions_before_long == 0:
             break_mins = self.long_break_minutes
         else:
             break_mins = self.break_minutes
@@ -158,7 +152,7 @@ class PomodoroTimer:
         self._remaining_seconds = self._total_seconds
         self.state = PomodoroState.BREAK
 
-        # Auto-start break countdown
+        
         self._thread = threading.Thread(target=self._countdown, daemon=True)
         self._thread.start()
 
@@ -212,5 +206,4 @@ class PomodoroTimer:
             print(f"[Pomodoro] Blocker deactivate error: {e}")
 
 
-# Singleton
 pomodoro_timer = PomodoroTimer()
