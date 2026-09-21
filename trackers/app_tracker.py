@@ -1,7 +1,4 @@
-"""
-FoxFlow — App Usage Tracker
-Monitors the active window/application on Windows.
-"""
+
 import threading
 import time
 from datetime import datetime, date
