@@ -1,7 +1,4 @@
-"""
-FoxFlow — Website Blocker
-Blocks distracting websites by modifying the Windows hosts file.
-"""
+
 import threading
 from datetime import datetime
 
@@ -13,8 +10,7 @@ FOXFLOW_MARKER_END = "# === FOXFLOW BLOCK END ==="
 
 
 class SiteBlocker:
-    """Manages website blocking via the hosts file."""
-
+    
     def __init__(self):
         self._lock = threading.Lock()
         self.is_enabled = False
@@ -72,7 +68,7 @@ class SiteBlocker:
             return {"error": str(e)}
 
     def remove_site(self, domain):
-        """Remove a domain from the block list."""
+      
         try:
             from db.database import SessionLocal
             from db.models import BlockedSite
@@ -95,7 +91,7 @@ class SiteBlocker:
             return {"error": str(e)}
 
     def toggle_site(self, domain):
-        """Toggle a site's active status."""
+       
         try:
             from db.database import SessionLocal
             from db.models import BlockedSite
@@ -118,13 +114,13 @@ class SiteBlocker:
             return {"error": str(e)}
 
     def enable(self):
-        """Enable blocking (write to hosts file)."""
+      
         with self._lock:
             self.is_enabled = True
             self._update_hosts_file()
 
     def disable(self):
-        """Disable blocking (remove from hosts file)."""
+     
         with self._lock:
             self.is_enabled = False
             self._remove_foxflow_entries()
@@ -136,7 +132,7 @@ class SiteBlocker:
         }
 
     def _update_hosts_file(self):
-        """Write active blocked domains to the hosts file."""
+       
         try:
             from db.database import SessionLocal
             from db.models import BlockedSite
@@ -198,5 +194,5 @@ class SiteBlocker:
             print(f"[Blocker] Error cleaning hosts: {e}")
 
 
-# Singleton
+
 site_blocker = SiteBlocker()
