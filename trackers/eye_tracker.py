@@ -1,7 +1,4 @@
-"""
-FoxFlow — Eye Tracking Module
-Uses MediaPipe Face Mesh to detect whether the user is looking at the screen.
-"""
+
 import threading
 import time
 import os
