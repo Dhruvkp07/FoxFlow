@@ -1,11 +1,6 @@
-"""
-FoxFlow — Main Entry Point
-Starts the FastAPI server with all routes and serves the dashboard.
-"""
 import sys
 import os
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI
@@ -16,17 +11,14 @@ import uvicorn
 from config import HOST, PORT, DASHBOARD_DIR
 from db.database import init_db
 
-# Create FastAPI app
 app = FastAPI(
     title="FoxFlow",
     description="🦊 Productivity Intelligence Platform",
     version="1.0.0",
 )
 
-# Initialize database
 init_db()
 
-# Register API routes
 from api.routes_tracking import router as tracking_router
 from api.routes_features import router as features_router
 from api.routes_reports import router as reports_router
@@ -37,13 +29,11 @@ app.include_router(features_router)
 app.include_router(reports_router)
 app.include_router(ai_router)
 
-# Serve dashboard static files
 app.mount("/css", StaticFiles(directory=str(DASHBOARD_DIR / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(DASHBOARD_DIR / "js")), name="js")
 app.mount("/assets", StaticFiles(directory=str(DASHBOARD_DIR / "assets")), name="assets")
 
 
-# Dashboard page routes
 @app.get("/")
 async def dashboard():
     return FileResponse(str(DASHBOARD_DIR / "index.html"))
