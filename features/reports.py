@@ -1,16 +1,13 @@
-"""
-FoxFlow — Report Generator
-Generates daily, weekly, and monthly productivity reports.
-"""
+
 from datetime import date, timedelta
 from sqlalchemy import func
 
 
 class ReportGenerator:
-    """Generates productivity reports from tracked data."""
+    
 
     def daily_report(self, report_date=None):
-        """Generate a comprehensive daily report."""
+      
         if report_date is None:
             report_date = date.today()
 
@@ -23,13 +20,12 @@ class ReportGenerator:
 
             db = SessionLocal()
             try:
-                # Eye tracking
+            
                 eye_focus = db.query(func.sum(EyeTrackingSession.total_focus_seconds))\
                     .filter(EyeTrackingSession.date == report_date).scalar() or 0
                 eye_away = db.query(func.sum(EyeTrackingSession.total_away_seconds))\
                     .filter(EyeTrackingSession.date == report_date).scalar() or 0
 
-                # Top apps
                 top_apps = (
                     db.query(AppUsage.app_name, func.sum(AppUsage.duration_seconds).label("total"))
                     .filter(AppUsage.date == report_date)
@@ -39,7 +35,7 @@ class ReportGenerator:
                     .all()
                 )
 
-                # Top websites
+              
                 top_sites = (
                     db.query(WebsiteVisit.domain, func.sum(WebsiteVisit.duration_seconds).label("total"))
                     .filter(WebsiteVisit.date == report_date)
@@ -49,7 +45,6 @@ class ReportGenerator:
                     .all()
                 )
 
-                # Input activity
                 total_keys = db.query(func.sum(InputActivity.key_count))\
                     .filter(InputActivity.date == report_date).scalar() or 0
                 total_clicks = db.query(func.sum(InputActivity.mouse_clicks))\
@@ -57,7 +52,7 @@ class ReportGenerator:
                 total_distance = db.query(func.sum(InputActivity.mouse_distance_px))\
                     .filter(InputActivity.date == report_date).scalar() or 0
 
-                # Focus scores by hour
+                
                 hourly_scores = (
                     db.query(FocusScore.hour, func.avg(FocusScore.score).label("avg_score"))
                     .filter(FocusScore.date == report_date)
@@ -68,11 +63,11 @@ class ReportGenerator:
                 avg_focus = db.query(func.avg(FocusScore.score))\
                     .filter(FocusScore.date == report_date).scalar() or 0
 
-                # Pomodoro
+               
                 pomodoros = db.query(func.count(PomodoroSession.id))\
                     .filter(PomodoroSession.date == report_date, PomodoroSession.completed == True).scalar() or 0
 
-                # Goals
+              
                 goals_met = 0
                 goals = db.query(Goal).filter_by(active=True).all()
                 for g in goals:
