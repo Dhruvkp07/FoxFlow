@@ -1,15 +1,11 @@
-"""
-FoxFlow — Streak & Goal System
-Custom streaks for productivity goals.
-"""
+
 from datetime import date, timedelta
 
 
 class StreakManager:
-    """Manages custom goals and their associated streaks."""
 
     def get_all_goals(self, active_only=True):
-        """Get all goals with streak info."""
+       
         try:
             from db.database import SessionLocal
             from db.models import Goal
@@ -28,7 +24,7 @@ class StreakManager:
             return []
 
     def create_goal(self, title, description, target_type, target_value, target_unit="minutes"):
-        """Create a new goal."""
+       
         try:
             from db.database import SessionLocal
             from db.models import Goal
