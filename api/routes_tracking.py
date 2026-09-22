@@ -1,6 +1,3 @@
-"""
-FoxFlow — Tracking API Routes
-"""
 from fastapi import APIRouter
 from trackers.eye_tracker import eye_tracker
 from trackers.app_tracker import app_tracker
