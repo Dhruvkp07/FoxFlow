@@ -1,6 +1,3 @@
-"""
-FoxFlow — Features API Routes (Pomodoro, Blocker, Goals)
-"""
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
@@ -11,8 +8,6 @@ from features.streaks import streak_manager
 
 router = APIRouter(prefix="/api/features", tags=["features"])
 
-
-# ── Pomodoro ──────────────────────────────────────────────
 
 class PomodoroStartRequest(BaseModel):
     work_minutes: Optional[int] = None
