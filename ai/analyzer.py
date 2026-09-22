@@ -1,13 +1,8 @@
-"""
-FoxFlow — AI Analyzer
-Uses Google Gemini (or compatible LLM) to analyze productivity data and provide insights.
-"""
 from datetime import date, timedelta
 from config import GEMINI_API_KEY, AI_MODEL
 
 
 class AIAnalyzer:
-    """Analyzes productivity data using an LLM."""
 
     def __init__(self):
         self._model = None
@@ -24,7 +19,6 @@ class AIAnalyzer:
         return self._model
 
     def analyze_day(self, report_date=None):
-        """Analyze a day's productivity data."""
         from features.reports import report_generator
 
         if report_date is None:
@@ -35,7 +29,6 @@ class AIAnalyzer:
         prompt = self._build_daily_prompt(report)
         insights = self._query_llm(prompt)
 
-        # Cache insights
         if insights:
             self._save_insights(report_date, insights)
 
@@ -62,7 +55,6 @@ class AIAnalyzer:
         """Ask a question about productivity data."""
         from features.reports import report_generator
 
-        # Gather context: last 3 days of data
         context_data = []
         for i in range(3):
             d = date.today() - timedelta(days=i)
@@ -178,12 +170,6 @@ Based on your tracked data, here's what we can see:
 - ⏱️ Tracking is active and recording your sessions
 - 🎯 Set up your API key to unlock personalized AI insights about your productivity patterns!
 
-### How to Enable AI
-Set your Gemini API key:
-```
-set GEMINI_API_KEY=your_api_key_here
-```
-Then restart FoxFlow to see personalized AI-powered productivity insights."""
 
     def _format_list(self, items, name_key, value_key):
         if not items:
