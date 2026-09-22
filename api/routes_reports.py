@@ -1,6 +1,3 @@
-"""
-FoxFlow — Reports API Routes
-"""
 from datetime import date
 from typing import Optional
 
