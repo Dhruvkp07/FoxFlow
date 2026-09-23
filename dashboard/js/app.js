@@ -1,7 +1,4 @@
-/**
- * FoxFlow — Core App Module
- * Navigation, utilities, and shared functionality.
- */
+
 
 const API = {
     get: async (url) => {
