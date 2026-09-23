@@ -1,16 +1,8 @@
-"""
-FoxFlow - Database Export to Excel / CSV Tool
-
-Run this script to export all recorded FoxFlow database tables into 
-Excel-compatible CSV files and an Excel workbook (if pandas/openpyxl is installed).
-"""
-
 import os
 import sqlite3
 import csv
 from pathlib import Path
 
-# Paths
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / "db" / "foxflow.db"
 EXPORT_DIR = BASE_DIR / "exports"
@@ -21,13 +13,11 @@ def export_database():
         print(f"Error: Database file not found at {DB_PATH}")
         return
 
-    # Create exports directory if it doesn't exist
     EXPORT_DIR.mkdir(exist_ok=True)
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    # Get list of all tables
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
     tables = [row[0] for row in cursor.fetchall() if not row[0].startswith("sqlite_")]
 
@@ -35,7 +25,6 @@ def export_database():
 
     exported_files = []
 
-    # Export each table to CSV
     for table in tables:
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
@@ -50,7 +39,7 @@ def export_database():
         exported_files.append(csv_file_path)
         print(f"  [✓] Exported '{table}' ({len(rows)} rows) -> {csv_file_path.name}")
 
-    # Try exporting to a single .xlsx file if pandas/openpyxl available
+
     try:
         import pandas as pd
         excel_file_path = EXPORT_DIR / "foxflow_all_data.xlsx"
