@@ -1,6 +1,4 @@
-"""
-FoxFlow Database Setup
-"""
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from config import DATABASE_URL
@@ -14,7 +12,6 @@ class Base(DeclarativeBase):
 
 
 def get_db():
-    """FastAPI dependency for DB sessions."""
     db = SessionLocal()
     try:
         yield db
