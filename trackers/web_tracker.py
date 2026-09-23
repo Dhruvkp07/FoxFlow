@@ -1,7 +1,3 @@
-"""
-FoxFlow — Website Visit Tracker
-Reads browser history from Chrome/Edge SQLite databases.
-"""
 import os
 import shutil
 import sqlite3
@@ -28,7 +24,6 @@ class WebTracker:
         if self.running:
             return
         self.running = True
-        # Initialize last visit time to now to avoid importing old history
         now_chrome = self._datetime_to_chrome_timestamp(datetime.utcnow() - timedelta(hours=1))
         for browser in ["chrome", "edge"]:
             self._last_visit_time[browser] = now_chrome
