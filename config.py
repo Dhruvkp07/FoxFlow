@@ -13,13 +13,13 @@ DATABASE_URL = f"sqlite:///{DB_DIR / 'foxflow.db'}"
 HOST = "127.0.0.1"
 PORT = 8000
 
-EYE_TRACK_INTERVAL_MS = 500          # Sample every 500ms
-EYE_TRACK_SAVE_INTERVAL_S = 300      # Save to DB every 5 minutes
-EYE_FOCUS_THRESHOLD = 0.25           # Iris displacement threshold for "looking away"
+EYE_TRACK_INTERVAL_MS = 500          
+EYE_TRACK_SAVE_INTERVAL_S = 300      
+EYE_FOCUS_THRESHOLD = 0.25         
 
-APP_TRACK_INTERVAL_S = 2             # Poll active window every 2 seconds
+APP_TRACK_INTERVAL_S = 2            
 
-WEB_TRACK_INTERVAL_S = 30            # Poll browser history every 30 seconds
+WEB_TRACK_INTERVAL_S = 30           
 CHROME_HISTORY_PATH = os.path.expanduser(
     r"~\AppData\Local\Google\Chrome\User Data\Default\History"
 )
@@ -28,7 +28,7 @@ EDGE_HISTORY_PATH = os.path.expanduser(
 )
 
 
-INPUT_AGGREGATE_INTERVAL_S = 300     # Aggregate every 5 minutes
+INPUT_AGGREGATE_INTERVAL_S = 300    
 
 FOCUS_WEIGHTS = {
     "eye_focus": 0.40,
