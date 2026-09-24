@@ -1,7 +1,3 @@
-"""
-FoxFlow — Keyboard & Mouse Activity Tracker
-Uses pynput to monitor input activity levels.
-"""
 import math
 import threading
 import time
@@ -24,17 +20,16 @@ class InputTracker:
         self._lock = threading.Lock()
         self._save_thread = None
 
-        # Accumulators (reset each interval)
+     
         self._key_count = 0
         self._mouse_clicks = 0
         self._mouse_distance = 0.0
         self._last_mouse_pos = None
 
-        # Listeners
+    
         self._kb_listener = None
         self._mouse_listener = None
 
-        # Today totals
         self.total_keys = 0
         self.total_clicks = 0
         self.total_distance = 0.0
@@ -47,12 +42,12 @@ class InputTracker:
 
         self.running = True
 
-        # Start keyboard listener
+
         self._kb_listener = keyboard.Listener(on_press=self._on_key_press)
         self._kb_listener.daemon = True
         self._kb_listener.start()
 
-        # Start mouse listener
+    
         self._mouse_listener = mouse.Listener(
             on_click=self._on_mouse_click,
             on_move=self._on_mouse_move,
@@ -60,7 +55,6 @@ class InputTracker:
         self._mouse_listener.daemon = True
         self._mouse_listener.start()
 
-        # Start periodic save thread
         self._save_thread = threading.Thread(target=self._save_loop, daemon=True)
         self._save_thread.start()
 
